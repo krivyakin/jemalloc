@@ -634,6 +634,18 @@ if test "x$enable_ivsalloc" = "x1" ; then
   AC_DEFINE([JEMALLOC_IVSALLOC], [ ])
 fi
 
+AC_ARG_ENABLE([hugetlb],
+  [AS_HELP_STRING([--enable-hugetlb], [Use huge page for mmaped memory])],
+[if test "x$enable_debug" = "xno" ; then
+  enable_hugetlb="0"
+else
+  enable_hugetlb="1"
+  JE_CFLAGS_APPEND([-DHUGETLB_ENABLE])
+fi
+],
+[enable_hugetlb="0"]
+)
+
 dnl Only optimize if not debugging.
 if test "x$enable_debug" = "x0" -a "x$no_CFLAGS" = "xyes" ; then
   dnl Make sure that an optimization flag was not specified in EXTRA_CFLAGS.
@@ -1489,4 +1501,5 @@ AC_MSG_RESULT([munmap             : ${enable_munmap}])
 AC_MSG_RESULT([dss                : ${enable_dss}])
 AC_MSG_RESULT([lazy_lock          : ${enable_lazy_lock}])
 AC_MSG_RESULT([tls                : ${enable_tls}])
+AC_MSG_RESULT([hugetlb            : ${enable_hugetlb}])
 AC_MSG_RESULT([===============================================================================])

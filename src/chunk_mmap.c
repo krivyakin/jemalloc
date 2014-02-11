@@ -30,9 +30,21 @@ pages_map(void *addr, size_t size)
 	 * We don't use MAP_FIXED here, because it can cause the *replacement*
 	 * of existing mappings, and we only want to create new mappings.
 	 */
+#ifdef HUGETLB_ENABLE
+	ret = mmap(addr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON |
+	    MAP_HUGETLB, -1, 0);
+	assert(ret != NULL);
+
+	if (ret == MAP_FAILED && errno == ENOMEM) {
+		ret = mmap(addr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE |
+		    MAP_ANON, -1, 0);
+		assert(ret != NULL);
+	}
+#else
 	ret = mmap(addr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON,
 	    -1, 0);
 	assert(ret != NULL);
+#endif
 
 	if (ret == MAP_FAILED)
 		ret = NULL;
@@ -64,6 +76,10 @@ pages_unmap(void *addr, size_t size)
 #ifdef _WIN32
 	if (VirtualFree(addr, 0, MEM_RELEASE) == 0)
 #else
+#ifdef HUGETLB_ENABLE
+	const int page_size = 1024 * 1024 *2;
+	size += ((size % page_size) != 0) * page_size - (size % page_size);
+#endif
 	if (munmap(addr, size) == -1)
 #endif
 	{
