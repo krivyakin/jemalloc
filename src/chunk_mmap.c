@@ -75,14 +75,17 @@ pages_unmap(void *addr, size_t size)
 
 #ifdef _WIN32
 	if (VirtualFree(addr, 0, MEM_RELEASE) == 0)
-#else
-#ifdef HUGETLB_ENABLE
-	const int page_size = 1024 * 1024 *2;
-	size += ((size % page_size) != 0) * page_size - (size % page_size);
-#endif
-	if (munmap(addr, size) == -1)
-#endif
 	{
+#else
+	if (munmap(addr, size) == -1)
+	{
+#ifdef HUGETLB_ENABLE
+		const int page_size = 1024 * 1024 *2;
+		size += ((size % page_size) != 0) * page_size - (size % page_size);
+		if (munmap(addr, size) == 0)
+			return;
+#endif
+#endif
 		char buf[BUFERROR_BUF];
 
 		buferror(get_errno(), buf, sizeof(buf));
